@@ -11,6 +11,7 @@ This project explores what factors influence whether a customer purchases a bike
 **Key question answered:** *What customer profiles are most likely to purchase a bike?*
 
 ---
+🌐 **[Live Dashboard](https://AnuragSharma9302.github.io/bike-buyers-excel-dashboard/)**
 
 ## 📁 File Structure
 
