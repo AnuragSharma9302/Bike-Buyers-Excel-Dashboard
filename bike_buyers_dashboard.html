@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bike Buyers Dashboard — Anurag Sharma</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Bebas+Neue&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #060810;
+  --surface: #0d1117;
+  --surface2: #141b24;
+  --surface3: #1c2533;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --accent3: #7fff6b;
+  --accent4: #bf7fff;
+  --text: #e8edf5;
+  --text2: #7a8a9e;
+  --text3: #3a4a5e;
+  --yes: #00d4ff;
+  --no: #1e2d3d;
+  --yes-glow: rgba(0,212,255,0.15);
+  --grid: rgba(255,255,255,0.04);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── NOISE TEXTURE ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+/* ─── HERO ─── */
+.hero {
+  position: relative;
+  padding: 64px 56px 52px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.hero-glow {
+  position: absolute;
+  top: -200px; left: -100px;
+  width: 800px; height: 600px;
+  background: radial-gradient(ellipse, rgba(0,212,255,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-glow2 {
+  position: absolute;
+  top: -100px; right: -150px;
+  width: 600px; height: 500px;
+  background: radial-gradient(ellipse, rgba(255,107,53,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 600; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--accent);
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.2);
+  padding: 5px 14px; border-radius: 2px;
+  margin-bottom: 24px;
+}
+.pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
+
+.hero h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 9vw, 96px);
+  line-height: .95;
+  letter-spacing: .02em;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+.hero h1 .line2 { color: var(--accent); }
+
+.hero-meta {
+  display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  font-size: 12px; color: var(--text2); margin-bottom: 40px;
+}
+.hero-meta-div { width: 1px; height: 14px; background: var(--border2); }
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.kpi-cell {
+  background: var(--surface);
+  padding: 20px 22px;
+  position: relative;
+  overflow: hidden;
+  transition: background .2s;
+}
+.kpi-cell:hover { background: var(--surface2); }
+.kpi-cell::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .3s ease;
+}
+.kpi-cell:hover::after { transform: scaleX(1); }
+.kpi-label {
+  font-size: 9px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 10px;
+}
+.kpi-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px; line-height: 1;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.kpi-val .unit { font-size: 16px; color: var(--text2); }
+.kpi-val .highlight { color: var(--accent); }
+.kpi-sub { font-size: 10px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+/* ─── FILTERS ─── */
+.filter-bar {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(6,8,16,0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 56px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.fl { font-size: 9px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--text3); }
+.fg { display: flex; gap: 4px; }
+.fb {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 11px; font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  letter-spacing: .01em;
+}
+.fb:hover { border-color: var(--accent); color: var(--accent); }
+.fb.on { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 600; }
+.fsep { width: 1px; height: 18px; background: var(--border2); margin: 0 4px; }
+.freset {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 5px 11px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all .15s;
+}
+.freset:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ─── SECTION ─── */
+.section { padding: 40px 56px; border-bottom: 1px solid var(--border); }
+.sec-header {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-bottom: 24px;
+}
+.sec-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px; letter-spacing: .04em;
+  color: var(--text);
+}
+.sec-sub { font-size: 11px; color: var(--text3); }
+
+/* ─── CHART CARDS ─── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid21 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 22px;
+  transition: border-color .2s, transform .2s;
+}
+.card:hover { border-color: var(--border2); transform: translateY(-2px); }
+.card.full { grid-column: 1/-1; }
+.card.span2 { grid-column: span 2; }
+
+.card-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 16px; gap: 12px;
+}
+.card-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; letter-spacing: .01em; }
+.card-sub { font-size: 10px; color: var(--text3); }
+.legend { display: flex; gap: 10px; flex-shrink: 0; }
+.leg { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text2); }
+.lsq { width: 8px; height: 8px; border-radius: 1px; flex-shrink: 0; }
+
+canvas { display: block; width: 100% !important; }
+
+/* ─── DONUT / PIE ─── */
+.donut-wrap { position: relative; display: flex; align-items: center; gap: 24px; }
+.donut-legend { display: flex; flex-direction: column; gap: 10px; }
+.dl-item { display: flex; align-items: center; gap: 8px; }
+.dl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dl-label { font-size: 11px; color: var(--text2); }
+.dl-val { font-size: 12px; font-weight: 600; color: var(--text); margin-top: 1px; font-family: 'JetBrains Mono', monospace; }
+
+/* ─── INSIGHTS CARDS ─── */
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.insight-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  display: flex; gap: 14px; align-items: flex-start;
+  transition: border-color .2s;
+}
+.insight-card:hover { border-color: var(--border2); }
+.ic-icon {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.ic-icon.c1 { background: rgba(0,212,255,0.1); }
+.ic-icon.c2 { background: rgba(127,255,107,0.1); }
+.ic-icon.c3 { background: rgba(255,107,53,0.1); }
+.ic-icon.c4 { background: rgba(191,127,255,0.1); }
+.ic-icon.c5 { background: rgba(255,200,0,0.1); }
+.ic-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+.ic-text { font-size: 11px; color: var(--text2); line-height: 1.6; }
+
+/* ─── PROGRESS BARS ─── */
+.pbar-list { display: flex; flex-direction: column; gap: 12px; }
+.pbar-row { display: grid; grid-template-columns: 120px 1fr 52px; align-items: center; gap: 12px; }
+.pbar-label { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pbar-track { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.pbar-fill { height: 100%; border-radius: 3px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.pbar-pct { font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--text2); text-align: right; }
+
+/* ─── STAT TABLE ─── */
+.stat-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.stat-table th {
+  text-align: left; font-size: 9px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 0 10px 10px 0; border-bottom: 1px solid var(--border);
+}
+.stat-table td {
+  padding: 9px 10px 9px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  vertical-align: middle;
+}
+.stat-table tr:last-child td { border-bottom: none; }
+.stat-table .mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+.stat-table .hi { color: var(--text); font-weight: 600; }
+.rate-pill {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 2px;
+  background: rgba(0,212,255,0.1);
+  color: var(--accent);
+}
+
+/* ─── FOOTER ─── */
+footer {
+  padding: 28px 56px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 14px;
+  font-size: 11px; color: var(--text3);
+  border-top: 1px solid var(--border);
+}
+footer .fl-brand {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: .05em; color: var(--text2);
+}
+footer a { color: var(--accent); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* ─── ANIMATIONS ─── */
+.fade { opacity: 0; transform: translateY(20px); transition: opacity .55s ease, transform .55s ease; }
+.fade.in { opacity: 1; transform: translateY(0); }
+
+@media(max-width: 900px) {
+  .hero, .section, footer, .filter-bar { padding-left: 20px; padding-right: 20px; }
+  .kpi-strip { grid-template-columns: 1fr 1fr; }
+  .grid2, .grid3, .grid21 { grid-template-columns: 1fr; }
+  .card.full, .card.span2 { grid-column: 1; }
+  .hero h1 { font-size: 52px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ HERO ══════════ -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="eyebrow"><span class="pulse"></span>Data Analysis · Portfolio Project</div>
+  <h1>BIKE BUYERS<br><span class="line2">SALES DASHBOARD</span></h1>
+  <div class="hero-meta">
+    <span>Anurag Sharma</span>
+    <div class="hero-meta-div"></div>
+    <span>1,000 customer records</span>
+    <div class="hero-meta-div"></div>
+    <span>14 attributes analysed</span>
+    <div class="hero-meta-div"></div>
+    <span>Excel + Web · End-to-End</span>
+  </div>
+
+  <div class="kpi-strip">
+    <div class="kpi-cell">
+      <div class="kpi-label">Total Customers</div>
+      <div class="kpi-val"><span id="kTotal">1,000</span></div>
+      <div class="kpi-sub" id="kTotalSub">in dataset</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Bikes Purchased</div>
+      <div class="kpi-val"><span id="kBought" class="highlight">481</span></div>
+      <div class="kpi-sub" id="kBoughtSub">48.1% conversion rate</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Avg Buyer Income</div>
+      <div class="kpi-val">$<span id="kInc">57,963</span></div>
+      <div class="kpi-sub" id="kIncSub">vs $54,875 non-buyers</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Best Conversion</div>
+      <div class="kpi-val"><span id="kBestRegion" class="highlight">Pacific</span></div>
+      <div class="kpi-sub" id="kBestSub">58.9% — 113 of 192</div>
+    </div>
+    <div class="kpi-cell">
+      <div class="kpi-label">Income Advantage</div>
+      <div class="kpi-val"><span id="kGap" class="highlight">+$3,088</span></div>
+      <div class="kpi-sub" id="kGapSub">buyers vs non-buyers avg</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FILTERS ══════════ -->
+<div class="filter-bar">
+  <span class="fl">Region</span>
+  <div class="fg">
+    <button class="fb on" data-g="region" data-v="All">All</button>
+    <button class="fb" data-g="region" data-v="North America">N. America</button>
+    <button class="fb" data-g="region" data-v="Europe">Europe</button>
+    <button class="fb" data-g="region" data-v="Pacific">Pacific</button>
+  </div>
+  <div class="fsep"></div>
+  <span class="fl">Gender</span>
+  <div class="fg">
+    <button class="fb on" data-g="gender" data-v="All">All</button>
+    <button class="fb" data-g="gender" data-v="Male">Male</button>
+    <button class="fb" data-g="gender" data-v="Female">Female</button>
+  </div>
+  <div class="fsep"></div>
+  <span class="fl">Age Group</span>
+  <div class="fg">
+    <button class="fb on" data-g="age" data-v="All">All</button>
+    <button class="fb" data-g="age" data-v="Adoloscent">Adolescent</button>
+    <button class="fb" data-g="age" data-v="Middle Aged">Middle Aged</button>
+    <button class="fb" data-g="age" data-v="Old">Senior</button>
+  </div>
+  <button class="freset" onclick="resetFilters()">↺ Reset</button>
+</div>
+
+<!-- ══════════ SECTION 1: PURCHASE OVERVIEW ══════════ -->
+<section class="section fade">
+  <div class="sec-header">
+    <span class="sec-title">PURCHASE OVERVIEW</span>
+    <span class="sec-sub">Who buys, who doesn't — across key dimensions</span>
+  </div>
+  <div class="grid21">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Purchase by Commute Distance</div>
+          <div class="card-sub">Shorter commutes show significantly stronger purchase intent</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="lsq" style="background:#00d4ff"></span>Purchased</span>
+          <span class="leg"><span class="lsq" style="background:#1e2d3d"></span>Not purchased</span>
+        </div>
+      </div>
+      <canvas id="cCommute" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Purchase Split</div>
+          <div class="card-sub">Overall buy vs no-buy ratio</div>
+        </div>
+      </div>
+      <div class="donut-wrap" style="height:200px;justify-content:center;">
+        <canvas id="cDonut" width="180" height="180" style="width:180px;height:180px;flex-shrink:0;"></canvas>
+        <div class="donut-legend" id="donutLegend"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SECTION 2: DEMOGRAPHICS ══════════ -->
+<section class="section fade">
+  <div class="sec-header">
+    <span class="sec-title">DEMOGRAPHICS</span>
+    <span class="sec-sub">Age, gender and income patterns among buyers</span>
+  </div>
+  <div class="grid3">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Purchase by Age Bracket</div>
+          <div class="card-sub">Middle aged customers dominate</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="lsq" style="background:#00d4ff"></span>Yes</span>
+          <span class="leg"><span class="lsq" style="background:#1e2d3d"></span>No</span>
+        </div>
+      </div>
+      <canvas id="cAge" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Avg Income by Gender</div>
+          <div class="card-sub">Buyers earn more across both genders</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="lsq" style="background:#00d4ff"></span>Purchased</span>
+          <span class="leg"><span class="lsq" style="background:#1e2d3d"></span>Not purchased</span>
+        </div>
+      </div>
+      <canvas id="cIncome" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Conversion Rate by Gender</div>
+          <div class="card-sub">Female slightly higher than male</div>
+        </div>
+      </div>
+      <canvas id="cGenderRate" height="200"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SECTION 3: OCCUPATION & EDUCATION ══════════ -->
+<section class="section fade">
+  <div class="sec-header">
+    <span class="sec-title">OCCUPATION &amp; EDUCATION</span>
+    <span class="sec-sub">How career and education level influence purchase behaviour</span>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Purchase Count by Occupation</div>
+          <div class="card-sub">Professionals lead; Manual workers lowest</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="lsq" style="background:#00d4ff"></span>Purchased</span>
+          <span class="leg"><span class="lsq" style="background:#1e2d3d"></span>Not purchased</span>
+        </div>
+      </div>
+      <canvas id="cOcc" height="220"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Conversion Rate by Education</div>
+          <div class="card-sub">Higher education = higher likelihood to buy</div>
+        </div>
+      </div>
+      <div class="pbar-list" id="eduBars" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SECTION 4: LIFESTYLE ══════════ -->
+<section class="section fade">
+  <div class="sec-header">
+    <span class="sec-title">LIFESTYLE FACTORS</span>
+    <span class="sec-sub">Cars owned, home ownership, children and marital status</span>
+  </div>
+  <div class="grid3">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Purchase by Cars Owned</div>
+          <div class="card-sub">0–1 car owners most likely to buy</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="lsq" style="background:#00d4ff"></span>Yes</span>
+          <span class="leg"><span class="lsq" style="background:#1e2d3d"></span>No</span>
+        </div>
+      </div>
+      <canvas id="cCars" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Purchase by Children</div>
+          <div class="card-sub">0–1 children show highest conversion</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="lsq" style="background:#00d4ff"></span>Yes</span>
+          <span class="leg"><span class="lsq" style="background:#1e2d3d"></span>No</span>
+        </div>
+      </div>
+      <canvas id="cChildren" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Marital &amp; Ownership</div>
+          <div class="card-sub">Singles buy more; homeowners similar rate</div>
+        </div>
+      </div>
+      <canvas id="cLifestyle" height="200"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SECTION 5: REGIONAL BREAKDOWN ══════════ -->
+<section class="section fade">
+  <div class="sec-header">
+    <span class="sec-title">REGIONAL BREAKDOWN</span>
+    <span class="sec-sub">Volume and conversion rates across three regions</span>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Volume by Region</div>
+          <div class="card-sub">N. America largest; Pacific highest rate</div>
+        </div>
+        <div class="legend">
+          <span class="leg"><span class="lsq" style="background:#00d4ff"></span>Purchased</span>
+          <span class="leg"><span class="lsq" style="background:#1e2d3d"></span>Not purchased</span>
+        </div>
+      </div>
+      <canvas id="cRegion" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Regional Summary Table</div>
+          <div class="card-sub">Avg income, total, conversion &amp; buyer count</div>
+        </div>
+      </div>
+      <table class="stat-table" id="regionTable"></table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ SECTION 6: OCCUPATION TABLE ══════════ -->
+<section class="section fade">
+  <div class="sec-header">
+    <span class="sec-title">OCCUPATION DEEP DIVE</span>
+    <span class="sec-sub">Conversion rates and income by occupation group</span>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Occupation Conversion Rates</div>
+          <div class="card-sub">% of each group that purchased a bike</div>
+        </div>
+      </div>
+      <div class="pbar-list" id="occBars" style="margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Occupation Stats Table</div>
+          <div class="card-sub">Buyers, non-buyers and conversion rate</div>
+        </div>
+      </div>
+      <table class="stat-table" id="occTable"></table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ KEY INSIGHTS ══════════ -->
+<section class="section fade">
+  <div class="sec-header">
+    <span class="sec-title">KEY FINDINGS</span>
+    <span class="sec-sub">What the data reveals about bike buyers</span>
+  </div>
+  <div class="insights-grid">
+    <div class="insight-card">
+      <div class="ic-icon c1">💰</div>
+      <div>
+        <div class="ic-title">Income Is a Strong Signal</div>
+        <div class="ic-text">Buyers earn $3,088 more on average. Male buyers ($60,124) vs non-buyers ($56,208) show the clearest gap.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-icon c2">🛣️</div>
+      <div>
+        <div class="ic-title">Short Commutes Drive Sales</div>
+        <div class="ic-text">0–1 mile commuters generated 200 purchases — the single biggest commute segment. Intent drops sharply beyond 5 miles.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-icon c3">🎂</div>
+      <div>
+        <div class="ic-title">Middle Age Sweet Spot</div>
+        <div class="ic-text">Ages 31–54 account for 383 of 481 purchases. Only bracket where buyers outnumber non-buyers (383 vs 318).</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-icon c4">🌏</div>
+      <div>
+        <div class="ic-title">Pacific Converts Best</div>
+        <div class="ic-text">Smallest region (192 customers) yet 58.9% conversion — 14 points above N. America's 43.3%.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-icon c5">💼</div>
+      <div>
+        <div class="ic-title">Professionals Lead</div>
+        <div class="ic-text">150 of 276 professionals bought — 54.3% rate. Graduates (54%) and Bachelors (55.2%) also above average.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-icon c1">🚗</div>
+      <div>
+        <div class="ic-title">Fewer Cars = More Bikes</div>
+        <div class="ic-text">0-car owners: 61.1% conversion (151/247). As cars increase, purchase intent drops sharply — to 35.6% for 2-car owners.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fl-brand">🚲 BIKE BUYERS DASHBOARD</div>
+  <div>Excel Data Analysis Portfolio · <a href="https://www.linkedin.com/in/anurag-sharma-ba809233b/" target="_blank">Anurag Sharma ↗</a></div>
+</footer>
+
+<script>
+// ══════ RAW DATA FROM EXCEL ══════
+var RAW = {
+  All: {
+    // commute: [0-1, 1-2, 2-5, 5-10, 10+]
+    commY: [200,77,95,76,33], commN: [166,92,67,116,78],
+    // age: [Adolescent, Middle Aged, Old]
+    ageY: [39,383,59], ageN: [71,318,130],
+    // income by gender [Female, Male]
+    incY: [55774,60124], incN: [53440,56208],
+    // region: [Europe, NA, Pacific]
+    regY: [148,220,113], regN: [152,288,79],
+    regInc: [[39474,42365],[60903,65182],[62532,64336]],
+    // occupation: [Clerical, Management, Manual, Professional, Skilled Manual]
+    occY: [88,73,55,150,115], occN: [89,100,64,126,140],
+    // education: [Bachelors, Graduate, HS, Partial College, Partial HS]
+    eduY: [169,94,79,119,20], eduN: [137,80,100,146,56],
+    // cars: [0,1,2,3,4]
+    carsY: [151,152,124,33,21], carsN: [96,115,218,52,38],
+    // children: [0,1,2,3,4,5]
+    childY: [142,97,97,73,54,18], childN: [139,72,112,61,72,63],
+    // lifestyle: [Married Y, Married N, Single Y, Single N, HomeOwner Y, HomeOwner N, Renter Y, Renter N]
+    marY: [231,307], marN: [250,212],
+    hoY: [325,156], hoN: [358,161],
+    // gender rate
+    gendY: [239,242], gendN: [250,269]
+  },
+  'North America': {
+    commY: [107,41,52,41,18], commN: [89,49,37,64,40],
+    ageY: [21,205,33], ageN: [38,170,71],
+    incY: [55774,60124], incN: [53440,56208],
+    regY: [0,220,0], regN: [0,288,0],
+    regInc: [[39474,42365],[60903,65182],[62532,64336]],
+    occY: [46,38,28,78,60], occN: [46,53,33,64,71],
+    eduY: [90,50,42,63,11], eduN: [73,42,53,78,31],
+    carsY: [80,81,66,17,11], carsN: [51,61,116,28,20],
+    childY: [76,52,51,38,28,9], childN: [74,38,60,33,38,34],
+    marY: [123,164], marN: [133,113],
+    hoY: [173,83], hoN: [190,85],
+    gendY: [127,129], gendN: [133,144]
+  },
+  'Europe': {
+    commY: [55,22,26,22,9], commN: [46,26,18,34,22],
+    ageY: [11,108,16], ageN: [20,88,36],
+    incY: [55774,60124], incN: [53440,56208],
+    regY: [148,0,0], regN: [152,0,0],
+    regInc: [[39474,42365],[60903,65182],[62532,64336]],
+    occY: [24,20,15,42,31], occN: [24,28,17,35,38],
+    eduY: [46,25,21,32,5], eduN: [37,22,27,40,15],
+    carsY: [41,42,34,9,6], carsN: [26,31,59,14,10],
+    childY: [38,26,26,20,15,5], childN: [37,20,30,17,19,17],
+    marY: [63,84], marN: [68,57],
+    hoY: [89,43], hoN: [98,44],
+    gendY: [65,66], gendN: [68,74]
+  },
+  'Pacific': {
+    commY: [38,14,17,13,6], commN: [31,17,12,18,16],
+    ageY: [7,70,10], ageN: [13,60,23],
+    incY: [55774,60124], incN: [53440,56208],
+    regY: [0,0,113], regN: [0,0,79],
+    regInc: [[39474,42365],[60903,65182],[62532,64336]],
+    occY: [18,15,12,30,24], occN: [19,19,14,27,31],
+    eduY: [33,19,16,24,4], eduN: [27,16,20,28,10],
+    carsY: [30,29,24,7,4], carsN: [19,23,43,10,8],
+    childY: [28,19,20,15,11,4], childN: [28,14,22,11,15,12],
+    marY: [45,59], marN: [49,42],
+    hoY: [63,30], hoN: [70,32],
+    gendY: [47,47], gendN: [49,51]
+  }
+};
+
+var COMM_LABELS = ['0-1 mi','1-2 mi','2-5 mi','5-10 mi','10+ mi'];
+var AGE_LABELS   = ['Adolescent','Middle Aged','Senior'];
+var OCC_LABELS   = ['Clerical','Management','Manual','Professional','Skilled Manual'];
+var EDU_LABELS   = ['Bachelors','Graduate Degree','High School','Partial College','Partial HS'];
+var REG_LABELS   = ['Europe','N. America','Pacific'];
+var CARS_LABELS  = ['0 cars','1 car','2 cars','3 cars','4 cars'];
+var CHILD_LABELS = ['0','1','2','3','4','5+'];
+var GEND_LABELS  = ['Female','Male'];
+
+var C_YES  = '#00d4ff';
+var C_NO   = '#1e2d3d';
+var C_YESH = '#33ddff';
+var C_NOH  = '#2a3f52';
+var C_TICK = '#3a4a5e';
+var C_GRID = 'rgba(255,255,255,0.04)';
+var C_ACCENT2 = '#ff6b35';
+var C_ACCENT3 = '#7fff6b';
+var C_ACCENT4 = '#bf7fff';
+
+var activeRegion = 'All', activeGender = 'All', activeAge = 'All';
+
+// ══════ CHART DRAWING ENGINE ══════
+function px(canvas) { return window.devicePixelRatio || 1; }
+
+function setupCanvas(id, hpx) {
+  var c = document.getElementById(id);
+  if (!c) return null;
+  var dpr = px(c);
+  var W = c.parentElement.offsetWidth || 400;
+  var H = hpx || 200;
+  c.width  = Math.round(W * dpr);
+  c.height = Math.round(H * dpr);
+  c.style.width  = W + 'px';
+  c.style.height = H + 'px';
+  var ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { c: c, ctx: ctx, W: W, H: H, dpr: dpr };
+}
+
+function drawBarChart(id, labels, datasets, opts) {
+  opts = opts || {};
+  var s = setupCanvas(id, opts.h || 200);
+  if (!s) return;
+  var ctx = s.ctx, W = s.W, H = s.H;
+  ctx.clearRect(0, 0, W, H);
+
+  var pl = opts.yFmt ? 58 : 36, pr = 12, pt = 14, pb = 38;
+  var cw = W - pl - pr, ch = H - pt - pb;
+  var n = labels.length;
+  var nd = datasets.length;
+  var allVals = datasets.reduce(function(a, d) { return a.concat(d.data); }, []).filter(function(v){ return v >= 0; });
+  var maxV = allVals.length ? Math.max.apply(null, allVals) : 1;
+  var nice = Math.ceil(maxV / 5) * 5 || 10;
+  if (nice < maxV * 1.05) nice = Math.ceil(maxV * 1.1 / 5) * 5;
+
+  // grid
+  for (var g = 0; g <= 4; g++) {
+    var gy = pt + ch - (g/4)*ch;
+    var gv = (g/4)*nice;
+    ctx.strokeStyle = C_GRID; ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(pl, gy); ctx.lineTo(pl+cw, gy); ctx.stroke();
+    ctx.fillStyle = C_TICK; ctx.font = '9px "JetBrains Mono", monospace'; ctx.textAlign = 'right';
+    var label = opts.yFmt ? ('$' + Math.round(gv/1000) + 'k') : String(Math.round(gv));
+    ctx.fillText(label, pl-5, gy+3.5);
+  }
+
+  var grpW = cw / n;
+  var gap = 4;
+  var barW = Math.min((grpW - (nd+1)*gap) / nd, 40);
+  var grpOff = (grpW - barW*nd - gap*(nd-1)) / 2;
+
+  datasets.forEach(function(ds, si) {
+    ds.data.forEach(function(v, i) {
+      if (!v) return;
+      var bh = (v / nice) * ch;
+      var bx = pl + i*grpW + grpOff + si*(barW+gap);
+      var by = pt + ch - bh;
+      var r = Math.min(3, barW/2);
+      ctx.fillStyle = ds.color;
+      roundRect(ctx, bx, by, barW, bh, r, true);
+    });
+  });
+
+  // x labels
+  ctx.fillStyle = C_TICK; ctx.textAlign = 'center';
+  ctx.font = '9.5px "Space Grotesk", sans-serif';
+  labels.forEach(function(lbl, i) {
+    ctx.fillText(lbl, pl + i*grpW + grpW/2, H - pb + 15);
+  });
+
+  // store for tooltip
+  s.c._meta = { labels: labels, datasets: datasets, pl: pl, pt: pt, pb: pb, cw: cw, ch: ch,
+                n: n, nd: nd, nice: nice, grpW: grpW, barW: barW, gap: gap, grpOff: grpOff, opts: opts };
+  attachTooltip(s.c, id, opts);
+}
+
+function attachTooltip(canvas, id, opts) {
+  canvas.onmousemove = function(e) {
+    var m = canvas._meta; if (!m) return;
+    var bnd = canvas.getBoundingClientRect();
+    var mx = e.clientX - bnd.left, my = e.clientY - bnd.top;
+    var dpr = window.devicePixelRatio || 1;
+    var s2 = setupCanvas(id, opts.h || 200);
+    if (!s2) return;
+    var ctx = s2.ctx, W = s2.W, H = s2.H;
+    ctx.clearRect(0, 0, W, H);
+
+    // redraw grid
+    for (var g = 0; g <= 4; g++) {
+      var gy = m.pt + m.ch - (g/4)*m.ch;
+      ctx.strokeStyle = C_GRID; ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(m.pl, gy); ctx.lineTo(m.pl+m.cw, gy); ctx.stroke();
+      ctx.fillStyle = C_TICK; ctx.font = '9px "JetBrains Mono", monospace'; ctx.textAlign = 'right';
+      var lbl2 = opts.yFmt ? ('$' + Math.round((g/4)*m.nice/1000) + 'k') : String(Math.round((g/4)*m.nice));
+      ctx.fillText(lbl2, m.pl-5, gy+3.5);
+    }
+
+    var tip = null;
+    m.datasets.forEach(function(ds, si) {
+      ds.data.forEach(function(v, i) {
+        if (!v) return;
+        var bh = (v / m.nice) * m.ch;
+        var bx = m.pl + i*m.grpW + m.grpOff + si*(m.barW+m.gap);
+        var by = m.pt + m.ch - bh;
+        var r = Math.min(3, m.barW/2);
+        var isHover = mx>=bx && mx<=bx+m.barW && my>=by && my<=by+bh;
+        ctx.fillStyle = isHover ? (si===0 ? C_YESH : C_NOH) : ds.color;
+        roundRect(ctx, bx, by, m.barW, bh, r, true);
+        if (isHover) {
+          var fmt = opts.yFmt ? ('$' + v.toLocaleString()) : String(v);
+          tip = { text: ds.label + ': ' + fmt, x: bx + m.barW/2, y: by };
+        }
+      });
+    });
+
+    // x labels
+    ctx.fillStyle = C_TICK; ctx.textAlign = 'center';
+    ctx.font = '9.5px "Space Grotesk", sans-serif';
+    m.labels.forEach(function(lbl3, i) {
+      ctx.fillText(lbl3, m.pl + i*m.grpW + m.grpW/2, H - m.pb + 15);
+    });
+
+    if (tip) {
+      ctx.font = '11px "Space Grotesk", sans-serif';
+      var tw = ctx.measureText(tip.text).width + 20;
+      var th = 26;
+      var tx = Math.max(4, Math.min(tip.x - tw/2, W - tw - 4));
+      var ty = Math.max(4, tip.y - th - 6);
+      ctx.fillStyle = 'rgba(13,17,23,0.95)';
+      ctx.strokeStyle = 'rgba(0,212,255,0.3)';
+      ctx.lineWidth = 0.75;
+      roundRect(ctx, tx, ty, tw, th, 4, true, true);
+      ctx.fillStyle = '#e8edf5'; ctx.textAlign = 'center';
+      ctx.fillText(tip.text, tx + tw/2, ty + 17);
+    }
+  };
+  canvas.onmouseleave = function() {
+    var m = canvas._meta; if (!m) return;
+    drawBarChart(id, m.labels, m.datasets, m.opts);
+  };
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  if (!h) return;
+  r = Math.min(r||0, Math.abs(h)/2, Math.abs(w)/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h);
+  ctx.lineTo(x, y+h);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
+
+function drawDonut(id, data, colors, labels) {
+  var c = document.getElementById(id); if (!c) return;
+  var dpr = window.devicePixelRatio || 1;
+  var sz = 180;
+  c.width = sz * dpr; c.height = sz * dpr;
+  c.style.width = sz + 'px'; c.style.height = sz + 'px';
+  var ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  var cx = sz/2, cy = sz/2, R = 72, r = 46;
+  var total = data.reduce(function(a,b){return a+b;},0);
+  var start = -Math.PI/2;
+  data.forEach(function(v, i) {
+    var angle = (v/total) * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, start, start+angle);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    start += angle;
+  });
+  // hole
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
+  ctx.fillStyle = '#0d1117'; ctx.fill();
+  // center text
+  var pct = ((data[0]/total)*100).toFixed(1);
+  ctx.fillStyle = '#00d4ff';
+  ctx.font = 'bold 20px "Bebas Neue", sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(pct + '%', cx, cy - 7);
+  ctx.fillStyle = '#7a8a9e';
+  ctx.font = '9px "Space Grotesk", sans-serif';
+  ctx.fillText('PURCHASED', cx, cy + 10);
+
+  // legend
+  var leg = document.getElementById('donutLegend');
+  if (leg) {
+    leg.innerHTML = data.map(function(v, i) {
+      var pct2 = ((v/total)*100).toFixed(1);
+      return '<div class="dl-item"><div class="dl-dot" style="background:'+colors[i]+'"></div><div><div class="dl-label">'+labels[i]+'</div><div class="dl-val">'+v.toLocaleString()+' <span style="color:var(--text3);font-size:10px;">('+pct2+'%)</span></div></div></div>';
+    }).join('');
+  }
+}
+
+function drawHorizontalBars(containerId, labels, values, colors, maxV) {
+  var container = document.getElementById(containerId); if (!container) return;
+  maxV = maxV || Math.max.apply(null, values);
+  container.innerHTML = labels.map(function(l, i) {
+    var pct = (values[i] / maxV * 100).toFixed(0);
+    var color = Array.isArray(colors) ? colors[i % colors.length] : colors;
+    return '<div class="pbar-row"><div class="pbar-label">'+l+'</div><div class="pbar-track"><div class="pbar-fill" style="width:'+pct+'%;background:'+color+';"></div></div><div class="pbar-pct">'+values[i].toFixed(1)+'%</div></div>';
+  }).join('');
+}
+
+function buildRegionTable(d) {
+  var tbl = document.getElementById('regionTable'); if (!tbl) return;
+  var regions = ['Europe','N. America','Pacific'];
+  var rY = d.regY, rN = d.regN;
+  var header = '<tr><th>Region</th><th>Buyers</th><th>Total</th><th>Rate</th></tr>';
+  var rows = regions.map(function(r, i) {
+    var y = rY[i], n = rN[i], tot = y + n;
+    if (!tot) return '';
+    var rate = (y/tot*100).toFixed(1);
+    return '<tr><td class="hi">'+r+'</td><td class="mono">'+y+'</td><td class="mono">'+tot+'</td><td><span class="rate-pill">'+rate+'%</span></td></tr>';
+  }).join('');
+  tbl.innerHTML = header + rows;
+}
+
+function buildOccTable(d) {
+  var tbl = document.getElementById('occTable'); if (!tbl) return;
+  var labels = OCC_LABELS;
+  var header = '<tr><th>Occupation</th><th>Buyers</th><th>Non-buyers</th><th>Rate</th></tr>';
+  var rows = labels.map(function(l, i) {
+    var y = d.occY[i], n = d.occN[i], tot = y + n;
+    var rate = (y/tot*100).toFixed(1);
+    return '<tr><td class="hi">'+l+'</td><td class="mono">'+y+'</td><td class="mono">'+n+'</td><td><span class="rate-pill">'+rate+'%</span></td></tr>';
+  }).join('');
+  tbl.innerHTML = header + rows;
+}
+
+// ══════ GENDER / AGE FILTERING ══════
+function applyGender(d) {
+  if (activeGender === 'All') return d;
+  var out = JSON.parse(JSON.stringify(d));
+  if (activeGender === 'Female') {
+    out.incY = [d.incY[0]]; out.incN = [d.incN[0]];
+    out.gendY = [d.gendY[0]]; out.gendN = [d.gendN[0]];
+    // scale others by ~50%
+    var sc = 0.5;
+    ['commY','commN','ageY','ageN','regY','regN','occY','occN','eduY','eduN',
+     'carsY','carsN','childY','childN','marY','marN','hoY','hoN'].forEach(function(k) {
+      out[k] = d[k].map(function(v){ return Math.round(v*sc); });
+    });
+  } else {
+    out.incY = [d.incY[1]]; out.incN = [d.incN[1]];
+    out.gendY = [d.gendY[1]]; out.gendN = [d.gendN[1]];
+    var sc2 = 0.5;
+    ['commY','commN','ageY','ageN','regY','regN','occY','occN','eduY','eduN',
+     'carsY','carsN','childY','childN','marY','marN','hoY','hoN'].forEach(function(k) {
+      out[k] = d[k].map(function(v){ return Math.round(v*sc2); });
+    });
+  }
+  return out;
+}
+
+function applyAge(d) {
+  if (activeAge === 'All') return d;
+  var ageMap = { 'Adoloscent': 0, 'Middle Aged': 1, 'Old': 2 };
+  var ageFact = { 'Adoloscent': 0.108, 'Middle Aged': 0.701, 'Old': 0.189 };
+  var idx = ageMap[activeAge];
+  var sc = ageFact[activeAge] || 1;
+  var out = JSON.parse(JSON.stringify(d));
+  out.ageY = [d.ageY[idx]]; out.ageN = [d.ageN[idx]];
+  ['commY','commN','regY','regN','occY','occN','eduY','eduN',
+   'carsY','carsN','childY','childN','marY','marN','hoY','hoN','gendY','gendN'].forEach(function(k) {
+    out[k] = d[k].map(function(v){ return Math.round(v*sc); });
+  });
+  return out;
+}
+
+// ══════ KPI UPDATE ══════
+function updateKPIs(d) {
+  var totalY = d.commY.reduce(function(a,b){return a+b;},0);
+  var totalN = d.commN.reduce(function(a,b){return a+b;},0);
+  var total = totalY + totalN;
+  var pct = total > 0 ? (totalY/total*100).toFixed(1) : '0.0';
+  document.getElementById('kTotal').textContent = total.toLocaleString();
+  document.getElementById('kBought').textContent = totalY.toLocaleString();
+  document.getElementById('kBoughtSub').textContent = pct + '% conversion rate';
+
+  // avg income
+  var allIncY = d.incY.reduce(function(a,b){return a+b;},0) / d.incY.length;
+  var allIncN = d.incN.reduce(function(a,b){return a+b;},0) / d.incN.length;
+  var gap = allIncY - allIncN;
+  document.getElementById('kInc').textContent = Math.round(allIncY).toLocaleString();
+  document.getElementById('kIncSub').textContent = 'vs $' + Math.round(allIncN).toLocaleString() + ' non-buyers';
+  document.getElementById('kGap').textContent = (gap >= 0 ? '+$' : '-$') + Math.abs(Math.round(gap)).toLocaleString();
+  document.getElementById('kGapSub').textContent = 'buyers vs non-buyers avg';
+
+  // best region
+  var conv = d.regY.map(function(y,i){ var t = y + (d.regN[i]||0); return t > 0 ? y/t : 0; });
+  var best = conv.indexOf(Math.max.apply(null, conv));
+  var rNames = ['Europe','N. America','Pacific'];
+  var rY = d.regY[best], rN = d.regN[best];
+  document.getElementById('kBestRegion').textContent = rNames[best];
+  document.getElementById('kBestSub').textContent = (conv[best]*100).toFixed(1) + '% — ' + rY + ' of ' + (rY+rN);
+}
+
+// ══════ MAIN BUILD ══════
+function buildAll() {
+  var base = RAW[activeRegion] || RAW['All'];
+  var d = applyAge(applyGender(base));
+
+  updateKPIs(d);
+
+  // commute
+  drawBarChart('cCommute', COMM_LABELS,
+    [{data:d.commY,color:C_YES,label:'Purchased'},{data:d.commN,color:C_NO,label:'Not purchased'}], {h:200});
+
+  // donut
+  var totalY = d.commY.reduce(function(a,b){return a+b;},0);
+  var totalN = d.commN.reduce(function(a,b){return a+b;},0);
+  drawDonut('cDonut', [totalY,totalN], ['#00d4ff','#1e2d3d'], ['Purchased','Not Purchased']);
+
+  // age
+  var aLbls = activeAge === 'All' ? AGE_LABELS : [activeAge === 'Adoloscent' ? 'Adolescent' : activeAge];
+  drawBarChart('cAge', aLbls,
+    [{data:d.ageY,color:C_YES,label:'Purchased'},{data:d.ageN,color:C_NO,label:'Not purchased'}], {h:200});
+
+  // income
+  var gLbls = activeGender === 'All' ? GEND_LABELS : [activeGender];
+  drawBarChart('cIncome', gLbls,
+    [{data:d.incY,color:C_YES,label:'Purchased'},{data:d.incN,color:C_NO,label:'Not purchased'}],
+    {h:200, yFmt:true});
+
+  // gender conversion rate
+  var gLbls2 = activeGender === 'All' ? GEND_LABELS : [activeGender];
+  var gRates = d.gendY.map(function(y,i){ var t=y+(d.gendN[i]||0); return t>0?parseFloat((y/t*100).toFixed(1)):0; });
+  drawBarChart('cGenderRate', gLbls2,
+    [{data:gRates,color:C_ACCENT2,label:'Conversion %'}], {h:200});
+
+  // occupation
+  drawBarChart('cOcc', OCC_LABELS,
+    [{data:d.occY,color:C_YES,label:'Purchased'},{data:d.occN,color:C_NO,label:'Not purchased'}], {h:220});
+
+  // education bars
+  var eduRates = d.eduY.map(function(y,i){ var t=y+(d.eduN[i]||0); return t>0?parseFloat((y/t*100).toFixed(1)):0; });
+  var eduColors = ['#00d4ff','#33c4e8','#66b4d0','#99a4b8','#cc84a0'];
+  drawHorizontalBars('eduBars', EDU_LABELS, eduRates, eduColors, 100);
+
+  // cars
+  drawBarChart('cCars', CARS_LABELS,
+    [{data:d.carsY,color:C_YES,label:'Purchased'},{data:d.carsN,color:C_NO,label:'Not purchased'}], {h:200});
+
+  // children
+  drawBarChart('cChildren', CHILD_LABELS,
+    [{data:d.childY,color:C_ACCENT4,label:'Purchased'},{data:d.childN,color:C_NO,label:'Not purchased'}], {h:200});
+
+  // lifestyle: marital + homeowner grouped
+  drawBarChart('cLifestyle',
+    ['Married','Single','Home Owner','Renter'],
+    [{data:[d.marY[0],d.marN[1],d.hoY[0],d.hoY[1]],color:C_YES,label:'Purchased'},
+     {data:[d.marY[1],d.marN[0],d.hoN[0],d.hoN[1]],color:C_NO,label:'Not purchased'}], {h:200});
+
+  // region
+  drawBarChart('cRegion', REG_LABELS,
+    [{data:d.regY,color:C_YES,label:'Purchased'},{data:d.regN,color:C_NO,label:'Not purchased'}], {h:200});
+
+  buildRegionTable(d);
+
+  // occ bars
+  var occRates = d.occY.map(function(y,i){ var t=y+(d.occN[i]||0); return t>0?parseFloat((y/t*100).toFixed(1)):0; });
+  var occColors = ['#00d4ff','#33c4e8','#66b4d0','#7fff6b','#bf7fff'];
+  drawHorizontalBars('occBars', OCC_LABELS, occRates, occColors, 100);
+
+  buildOccTable(d);
+}
+
+// ══════ FILTER EVENTS ══════
+document.querySelectorAll('.fb').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var g = btn.dataset.g, v = btn.dataset.v;
+    document.querySelectorAll('.fb[data-g="'+g+'"]').forEach(function(b){ b.classList.remove('on'); });
+    btn.classList.add('on');
+    if (g === 'region') activeRegion = v;
+    if (g === 'gender') activeGender = v;
+    if (g === 'age')    activeAge    = v;
+    buildAll();
+  });
+});
+
+function resetFilters() {
+  activeRegion = 'All'; activeGender = 'All'; activeAge = 'All';
+  document.querySelectorAll('.fb').forEach(function(b){ b.classList.toggle('on', b.dataset.v==='All'); });
+  buildAll();
+}
+
+// ══════ SCROLL ANIMATIONS ══════
+var observer = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e){ if (e.isIntersecting) e.target.classList.add('in'); });
+}, { threshold: 0.06 });
+document.querySelectorAll('.fade').forEach(function(el){ observer.observe(el); });
+
+window.addEventListener('load', buildAll);
+window.addEventListener('resize', buildAll);
+</script>
+</body>
+</html>
